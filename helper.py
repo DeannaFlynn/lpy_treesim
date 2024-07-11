@@ -1,6 +1,8 @@
 from openalea.plantgl.all import NurbsCurve
 from openalea.lpy import Lsystem, newmodule
-from random import uniform
+from random import uniform, seed
+from numpy import linspace, pi, sin, cos
+
 
 def amplitude(x): return 2
 
@@ -79,3 +81,30 @@ def gen_noise_branch(radius,nbp=20):
                                      myrandom(radius*amplitude(pt/float(nbp-1))),
                                      pt/float(nbp-1),1) for pt in range(2,nbp)],
                         degree=min(nbp-1,3),stride=nbp*100)
+
+def create_noisy_circle_curve(radius, noise_factor, num_points=100, seed=None):
+  if seed is not None:
+      seed(seed)
+  t = linspace(0, 2 * pi, num_points, endpoint=False)
+  points = []
+  for angle in t:
+      # Base circle points
+      x = radius * cos(angle)
+      y = radius * sin(angle)
+      
+      # Add noise
+      noise_x = uniform(-noise_factor, noise_factor)
+      noise_y = uniform(-noise_factor, noise_factor)
+      
+      noisy_x = x + noise_x
+      noisy_y = y + noise_y
+      
+      points.append((noisy_x, noisy_y))
+  
+  # Ensure the curve is closed by adding the first point at the end
+  points.append(points[0])
+  
+  # Create the PlantGL Point2Array and Polyline2D
+  curve_points = Point2Array(points)
+  curve = Polyline2D(curve_points)
+  return curve
