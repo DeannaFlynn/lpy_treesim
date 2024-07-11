@@ -12,6 +12,62 @@ import time
 import math
 from math import sin, cos, pi
 from helper import *
+
+
+class Leaf(BasicWood):
+    count = 0
+    def __init__(self, copy_from=None, max_buds_segment=3, thickness=0.05,
+                 thickness_increment=0.005, growth_length=0.5, max_length=2.0,
+                 tie_axis=(0, 1, 1), order=2, prototype_dict={}, name=None, color=None):
+        super().__init__(copy_from, max_buds_segment, thickness, thickness_increment, growth_length,
+                         max_length, tie_axis, order, color)
+        if copy_from:
+            self.__copy_constructor__(copy_from)
+        else:
+            self.prototype_dict = prototype_dict
+        if not name:
+            self.name = str(self.__class__.__name__) + '_' + str(self.__class__.count)
+        Leaf.count += 1
+    
+    def is_bud_break(self, num_buds_segment):
+        return (rd.random() < 0.05)
+    
+    def create_branch(self):
+        # Leafs typically do not create further branches, return None
+        return None
+    
+    def grow(self):
+      #self.num_branches += 1
+      #return
+      pass
+      
+class Apple(BasicWood):
+    count = 0
+    def __init__(self, copy_from=None, max_buds_segment=3, thickness=0.05,
+                 thickness_increment=0.005, growth_length=0.5, max_length=2.0,
+                 tie_axis=(0, 1, 1), order=2, prototype_dict={}, name=None, color=None):
+        super().__init__(copy_from, max_buds_segment, thickness, thickness_increment, growth_length,
+                         max_length, tie_axis, order, color)
+        if copy_from:
+            self.__copy_constructor__(copy_from)
+        else:
+            self.prototype_dict = prototype_dict
+        if not name:
+            self.name = str(self.__class__.__name__) + '_' + str(self.__class__.count)
+        Apple.count += 1
+    
+    def is_bud_break(self, num_buds_segment):
+        return (rd.random() < 0.05)
+    
+    def create_branch(self):
+        # Leafs typically do not create further branches, return None
+        return None
+    
+    def grow(self):
+      #self.num_branches += 1
+      #return
+      pass
+        
 class Spur(BasicWood):
   count = 0
   def __init__(self, copy_from = None, max_buds_segment: int = 5, thickness: float = 0.1,\
@@ -26,12 +82,22 @@ class Spur(BasicWood):
     if not name:
       self.name = str(self.__class__.__name__) +'_'+ str(self.__class__.count)   
     Spur.count+=1
+    self.num_leaves = 0
+    self.contour = create_noisy_circle_curve(1, .2, 30)
     
   def is_bud_break(self, num_buds_segment):
       return (rd.random() < 0.1)
     
   def create_branch(self):
-      return None
+    if self.num_leaves < 5: 
+      self.num_leaves += 1
+      if rd.random()<0.9:
+        new_ob = Leaf(copy_from = self.prototype_dict['leaf'])
+      else:
+        new_ob = Apple(copy_from = self.prototype_dict['apple'])
+    else: 
+      new_ob = None
+    return new_ob
   
   def grow(self):
     pass
@@ -53,6 +119,7 @@ class Branch(BasicWood):
       self.name = str(self.__class__.__name__) +'_'+ str(self.__class__.count)      
     Branch.count+=1
     self.num_buds_segment=0
+    self.contour = create_noisy_circle_curve(1, .2, 30)
                
   def is_bud_break(self, num_buds_segment):
       return (rd.random() < 0.01*(1 - self.num_buds_segment/self.max_buds_segment))
@@ -84,6 +151,7 @@ class Trunk(BasicWood):
     if not name:
       self.name = str(self.__class__.__name__) +'_'+ str(self.__class__.count)      
     Trunk.count+=1
+    self.contour = create_noisy_circle_curve(1, .2, 30)
     
   def is_bud_break(self, num_buds_segment):
     if (rd.random() > 0.2*(1 - num_buds_segment/self.max_buds_segment)):
@@ -115,6 +183,7 @@ class NonTrunk(BasicWood):
     if not name:
       self.name = str(self.__class__.__name__) +'_'+ str(self.__class__.count)      
     Branch.count+=1
+    self.contour = create_noisy_circle_curve(1, .2, 30)
                
   def is_bud_break(self, num_buds_segment):
       return (rd.random() < 0.02*(1 - num_buds_segment/self.max_buds_segment))
@@ -138,6 +207,14 @@ basicwood_prototypes['trunk'] = Trunk(tie_axis = (0,1,1), max_length = 0.4/growt
 basicwood_prototypes['branch'] = Branch(tie_axis = (0,1,1), max_length = .22/growth_length, thickness = 0.01, growth_length = 0.1,thickness_increment = 0.00001, prototype_dict = basicwood_prototypes, color = [255,150,0] )
 basicwood_prototypes['nontrunk'] = NonTrunk(tie_axis = (0,1,1), max_length = 0.05/growth_length, growth_length = 0.1, thickness = 0.003,thickness_increment = 0.0001, prototype_dict = basicwood_prototypes, color = [255,150,0] )
 basicwood_prototypes['spur'] = Spur(tie_axis = (0,1,1), max_length = 0.0008/growth_length, thickness = 0.003, growth_length = 0.2, thickness_increment = 0., prototype_dict = basicwood_prototypes, color = [0,255,0] )
+
+#----------------------
+# TESTING - CAMP
+basicwood_prototypes['leaf'] = Leaf(tie_axis=(0, 1, 1), max_length=0.02/growth_length, thickness=0.01, growth_length=0.05, thickness_increment=0.0005, prototype_dict=basicwood_prototypes, color=[36, 117, 32])
+
+basicwood_prototypes['apple'] = Apple(tie_axis=(0, 1, 1), max_length=0.02/growth_length, thickness=0.01, growth_length=0.05, thickness_increment=0.0005, prototype_dict=basicwood_prototypes, color=[36, 117, 32])
+#----------------------
+
 #init  
 trunk_base = Trunk(copy_from = basicwood_prototypes['trunk'])
 time_count = 0
@@ -155,8 +232,8 @@ def generate_points_v_trellis():
     pts.append((x[i], y[i], z[i]))
     id+=1
   return pts
-  
-support = Support(generate_points_v_trellis(), 14 , 1 , None, (0,0,1), None)
+#                  points,                   num_wires  spacing wires trunk_wire_pt    branch_axis    trunk_axis
+support = Support(generate_points_v_trellis(), 14 ,      1 ,            None,          (0,0,1),       None)
 num_iteration_tie = 20
 ###Tying stuff begins
     
@@ -175,7 +252,9 @@ def get_energy_mat(branches, arch):
       if wire.num_branch>=1:
         continue
       energy_matrix[branch_id][wire_id] = ed(wire.point,branch.end)/2+ed(wire.point,branch.start)/2#+v.num_branches*10+branch.bend_energy(deflection, curr_branch.age)
+
   return energy_matrix
+  
 def decide_guide(energy_matrix, branches, arch):
   for i in range(energy_matrix.shape[0]):
     min_arg = np.argwhere(energy_matrix == np.min(energy_matrix))
@@ -190,6 +269,7 @@ def decide_guide(energy_matrix, branches, arch):
         energy_matrix[min_arg[0][0]][j] = np.inf
       for j in range(energy_matrix.shape[0]):
         energy_matrix[j][min_arg[0][1]] = np.inf
+        
 def tie(lstring):
   for j,i in enumerate(lstring):
     if i == 'C' and i[0].type.__class__.__name__ == 'Branch':
@@ -252,6 +332,8 @@ module C
 extern(label = True)
 extern(seed_val = 0)
 rd.seed(seed_val)
+
+
 # Added by Camp    
 def create_noisy_circle_curve(radius, noise_factor, num_points=100, seed=None):
     if seed is not None:
@@ -301,7 +383,88 @@ def create_bezier_curve(num_control_points=4, x_range=(0, 10), y_range=(-2, 2), 
 def rgb_seed(r, g, b):
      return r * 256**2 + g * 256 + b
      
-     
+def make_apple_curve():
+  y1 = rd.uniform(.65,1)
+  y2 = rd.uniform(.8,1)
+  y3 = rd.uniform(.4,.5)
+  
+  # points from apple curve
+  # 0: (0, 0, 1)
+  # 1: (0, 1, 1)
+  # 2: (1, 0.807331, 1)
+  # 3: (1, 0.461907, 1)
+  #y3 = 0.439871
+  
+  base_points = [
+  #point 0   #point 1   #point 2         #point 3
+  (0, 0, 1), (0, y1, 1), (1, y2, 1),(1, y3, 1)
+  ]
+  
+  top_points = [
+  (0, y3, 1),(0, 0.118695, 1),(0.909233, 0.146624, 1),(1, -0.0977491, 1)
+  ]
+  
+  base_point_list = Point3Array(base_points)
+  curve1 = NurbsCurve2D(base_point_list)
+  base_curve = QuantisedFunction(curve1)
+  
+  top_point_list = Point3Array(top_points)
+  curve2 = BezierCurve2D(top_point_list)
+  top_curve = QuantisedFunction(curve2)
+  
+  return [base_curve,top_curve]
+  
+def make_stem_curve():
+  
+  # points from stem curve
+  # 0: (-1.48289, 0.982887, 1)
+  # 1: (-0.559816, 1.22861, 1.05),(1.05126, 1.57262, 1),(1.70403, -0.0245722, 1)
+  # 2: (1.05126, 1.57262, 1)
+  # 3: (1.70403, -0.0245722, 1)
+  
+  points = [
+  (-1.48289, 0.982887, 1),(-0.559816, 1.22861, 1.05),(1.05126, 1.57262, 1),(1.70403, -0.0245722, 1)
+  ]
+  ctrlPointList = Point3Array(points)
+  stem_curve = NurbsCurve2D(ctrlPointList)
+  return stem_curve
+
+base_height = 2.5
+rad = 2
+
+def make_leaf_guide():
+  
+  x1 = rd.uniform(0,.25)
+  x2 = rd.uniform(.65,.85)
+  y1 = rd.uniform(.45,.55)
+  y2 = rd.uniform(.25,.35)
+  
+  control_points = [
+  Vector3(0,0,0),
+  Vector3(x1,y1,0),
+  Vector3(x2,y2,0),
+  Vector3(1,0,0),
+  ]
+  
+  inverse_points = [
+  Vector3(0,0,0),
+  Vector3(x1,-y1,0),
+  Vector3(x2,-y2,0),
+  Vector3(1,0,0),
+  ]
+  
+  side1 = Point3Array(control_points)
+  side2 = Point3Array(inverse_points)
+  
+  curve1 = BezierCurve2D(side1)
+  curve2 = BezierCurve2D(side2)
+  
+  return [curve1, curve2]
+
+ 
+def reset_contour():
+  default_curve = create_noisy_circle_curve(1, 0, 30)  # Example of a simple default contour
+  nproduce SetContour(default_curve)
 
 global profile1, profile2, profile3    
 profile1 = create_noisy_circle_curve(1, .2, 30, 23)
@@ -309,6 +472,8 @@ profile2 = create_noisy_circle_curve(1, .2, 30)
 profile3 = create_noisy_circle_curve(1, .2, 30)
 # print("Labelling: ", label)
 # print("Seed ", seed_val)
+
+
 Axiom: Attractors(support)grow_object(trunk_base)
 derivation length: 105
 production:
@@ -325,24 +490,35 @@ grow_object(o) :
       # Apply color
       r, g, b = o.color
       nproduce SetColor(r, g, b)
+      # set unique color ID
       smallest_color = [r, g, b].index(min([r, g, b]))
       o.color[smallest_color] += 1
       
       # Check if it's a trunk or branch, then apply the contour
       if 'Trunk' in o.name or 'Branch' in o.name:
+        #print("TRUNK BRANCH NAME:    " + o.name)
         radius = o.thickness
         noise_factor = 0.8
         num_points = 60
-        nproduce SetContour(profile1)
+        nproduce SetContour(o.contour)
         #pass
-      
-      
+      else:
+        reset_contour()
       
       o.grow_one()
       if 'Spur' in o.name:
-        produce I(o.growth_length, o.thickness, o) bud(ParameterSet(type=o, num_buds=0)) my_bud(o.thickness) grow_object(o)
+        produce I(o.growth_length, o.thickness, o) bud(ParameterSet(type=o, num_buds=0)) spiked_bud(o.thickness)grow_object(o)
+      elif 'Leaf' in o.name:
+        produce L(.1)
+      elif 'Apple' in o.name:
+        #pass
+        #print("APPLE NAME:  " + o.name)
+        #produce [S(.1, .007)Ap]
+        produce [S(.1/2, .09/15)f(.1)&(180)A(.1, .09)]
       else:
         produce I(o.growth_length, o.thickness, o) bud(ParameterSet(type=o, num_buds=0)) grow_object(o)
+#L(.1)
+
 bud(t) :
  if t.type.is_bud_break(t.num_buds):
    new_object = t.type.create_branch()
@@ -353,6 +529,13 @@ bud(t) :
    #Store new object somewhere
    t.num_buds+=1
    t.type.num_branches+=1
+   
+   # set a different cross section for every branch
+   if 'Leaf' not in new_object.name and 'Apple' not in new_object.name:
+     #print("OBJECT NAME:   " + new_object.name)
+     nproduce SetContour( new_object.contour )
+     
+   # set a curve for tertiary branches to follow as they grow  
    if 'NonTrunk' in new_object.name:
         import time
         r, g, b = new_object.color
@@ -362,16 +545,49 @@ bud(t) :
    else:
      nproduce [
    nproduce @RGetPos(new_object.start)C(ParameterSet(type = new_object))/(rd.random()*360)&(rd.random()*90)grow_object(new_object)GetPos(new_object.end)]bud(t)
-# Added by Camp; bud geom
-my_bud(r):
+
+spiked_bud(r):
   base_height = r * 2
   top_height = r * 2
-  num_sec = 20
-  #nproduce SetContour(p)
-  produce @g(Cylinder(r,base_height,1,num_sec))f(base_height)@g(Cone(r,top_height,0,num_sec))
+  num_sect = 20
+  produce @g(Cylinder(r,base_height,1,num_sect))f(base_height)@g(Cone(r,top_height,0,num_sect))
+
+A(bh, r):
+  curves = make_apple_curve()
+  base_curve = curves[0]
+  top_curve = curves[1]
+  nproduce SetColor(230,0,0) SectionResolution(60)
+  produce nF(bh, .01, r, base_curve) ^(180) nF(bh/5, .1, r, top_curve)^(180)#S(bh/2,r/15)
+
+S(sh,r):
+  stem_curve = make_stem_curve()
+  nproduce SetColor(100,65,23) 
+  produce  SetGuide(stem_curve, sh) _(r)nF(sh, .1, r) #Ap
+
+
+Ap:
+  nproduce SetColor(255,0,0)SectionResolution(60)
+  produce @O(rd.uniform(.035, .05) )
+  
+L(l):
+  nproduce SetColor(0,225,0) 
+  # Setting the color to magenta to better see the leaves
+  #nproduce SetColor(255,0,255)
+  
+  curves = make_leaf_guide()
+  curve1 = curves[0]
+  curve2 = curves[1]
+  
+  #produce ~l(l)  
+  
+  # This is the line that should be drawing the leaf
+  # however only the first "F" actually shows up. The {} section which is the actual leaf never appears
+  produce _(.0025) F(l/10){[SetGuide(curve1, l) _(.001).nF(l, .01)][SetGuide(curve2, l)_(.001).nF(l, .01)]}
+
    
 I(s,r,o) --> I(s,r+o.thickness_increment, o)
-_(r) --> _(r+o.thickness_increment)
+#_(r) --> _(r+o.thickness_increment)
+_(r) --> _(r)
 homomorphism:
 I(a,r,o) --> F(a,r)
 S(a,r,o) --> F(a,r)
@@ -380,25 +596,3 @@ Attractors(support):
   pttodisplay = support.attractor_grid.get_enabled_points()
   if len(pttodisplay) > 0:
     produce [,(3) @g(PointSet(pttodisplay,width=10))]
-###### INITIALISATION ######
-
-__lpy_code_version__ = 1.1
-
-def __initialiseContext__(context):
-	context.animation_timestep = 0.15
-	import openalea.plantgl.all as pgl
-	curve1 = pgl.BezierCurve2D(	
-	    pgl.Point3Array([(-0.5, 0, 1),(-0.375458, 0.67033, 1),(0.0128205, -0.593407, 1),(0.505495, -0.236264, 1)]) , 
-	    )
-	curve1.name = "curve1"
-	parameter = pgl.BezierCurve2D(	
-	    pgl.Point3Array([(-0.5, 0, 1),(-0.166667, 0, 1),(0.166667, 0, 1),(0.5, 0, 1)]) , 
-	    )
-	parameter.name = "parameter"
-	panel_0 = ({'name': 'Panel 2', 'active': True, 'visible': True},[('Curve2D',curve1),('Curve2D',parameter)])
-	parameterset = [panel_0,]
-	context["__functions__"] = []
-	context["__curves__"] = [('curve1',curve1),('parameter',parameter),]
-	context["__parameterset__"] = parameterset
-	context["curve1"] = curve1
-	context["parameter"] = parameter
