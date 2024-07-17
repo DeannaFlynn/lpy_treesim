@@ -66,6 +66,14 @@ To install TreeSim_Lpy, follow these steps (adapted from the `L-Py documentation
 
       lpy
 
+6. **Install TreeSim_Lpy**:
+
+   With the conda environment for L-Py set, next we need to clone the TreeSim_Lpy repository. To do that run
+
+   .. code-block:: sh
+
+      git clone https://github.com/OSUrobotics/treesim_lpy.git
+
 Usage
 -----
 
