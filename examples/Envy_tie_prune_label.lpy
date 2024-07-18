@@ -2,7 +2,6 @@
 Tying, Pruning, and Labelling Envy architecture tree
 """
 import sys
-import os
 sys.path.append('../')
 from stochastic_tree import Support, BasicWood
 import numpy as np
@@ -12,7 +11,7 @@ import gc
 import time
 import math
 from math import sin, cos, pi
-from helper_edited import *
+from helper import *
 
 
 # Leaf class
