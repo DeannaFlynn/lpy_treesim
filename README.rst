@@ -93,7 +93,7 @@ There are many things you may want to modify as you grow your own trees. Here ar
           base_curve = curves[0]
           top_curve = curves[1]
           nproduce SetColor(230,0,0) SectionResolution(60)
-          produce nF(bh, .01, r, base_curve) ^(180) nF(bh/5, .1, r, top_curve)^(180)#S(bh/2,r/15)
+          produce nF(bh, .01, r, base_curve) ^(180) nF(bh/5, .1, r, top_curve)^(180)
    
    The parameters represent the base height of the apple and the radius of the apple. If you wanted to create a completely new apple geometry, just replace the code in this A section. However, if you simply want to edit the existing shape of the apple, that can be done in the ``make_apple_curve()`` section. 
 
