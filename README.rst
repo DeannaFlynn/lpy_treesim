@@ -111,6 +111,17 @@ There are many things you may want to modify as you grow your own trees. Here ar
 
 2. **Changing Leaf Geometry:**
 
+   The call production of the leaves happens in the ``grow_object(o)`` section:
+   
+   .. code-block:: python
+
+       elif 'Leaf' in o.name:
+           produce L(.1)
+
+   Here, .1 is just a hard-coded value that doesn't have much significance. 
+
+   The actual generation of the leaf can be seen in the ``L(l)`` production section:
+
    .. code-block:: python
 
       L(l):
@@ -119,11 +130,23 @@ There are many things you may want to modify as you grow your own trees. Here ar
           curves = make_leaf_guide()
           curve1 = curves[0]
           curve2 = curves[1]
-  
           produce _(.0025) F(l/10){[SetGuide(curve1, l) _(.001).nF(l, .01)][SetGuide(curve2, l)_(.001).nF(l, .01)]}
+   
+   The parameter here serves as the length of the leaf. To edit the shape of the leaf, edits can be made in the ``make_leaf_guide()`` function. In the ``make_leaf_guide()`` function, a BezierCurve2D and its inverse are generated. These are returned to be used as guides for the ``SetGuide`` function provided by L-Py. These curves are generated with random points from a set range in order to create leaves of different shape. These randomness of these points, or the range they are generated from, could be edited to change the leaf shape. However, a new geometry altogether could be made in the ``L(l)`` section.
+  
+          
 
 
 3. **Changing Bud Geometry:**
+
+   The call for the production of the buds occurs in the ``grow_one(o)`` section by addicting ``spiked_bud(o.thickness)`` to the ``produce`` call: 
+   
+   .. code-block:: python
+
+      if 'Spur' in o.name:
+          produce I(o.growth_length, o.thickness, o) bud(ParameterSet(type=o, num_buds=0)) spiked_bud(o.thickness)grow_object(o)
+   
+   The actual bud is produced in the ``spiked_bud`` production section: 
    
    .. code-block:: python
 
@@ -132,41 +155,87 @@ There are many things you may want to modify as you grow your own trees. Here ar
           top_height = r * 2
           num_sect = 20
           produce @g(Cylinder(r,base_height,1,num_sect))f(base_height)@g(Cone(r,top_height,0,num_sect))
+   
+   This is one of the most basic objects generated on the tree model. As the buds on actual trees are little spikes, the bud geometry is made up of a cone on top of a cylinder. These are both produced with L-Py's basic ``@g`` primitive used to draw PglShapes. The height of the two shapes scale with the radius (provided as the parameter). The ``num_sect`` is used to determine how many sections each shape is made up of, and 20 was chosen as they appear circular without adding too many triangles to the model. 
+   
+   
 
 4. **Changing Branch Profile Curve:**
-
+   
+   Every branch on the model has a unique profile curve. This is so the model doesn't appear to be perfectly cylindrical (as if made of PVC pipes). Every branch has its own unique curve that is generated when the branch is originally generated. This can be found in the actual class declaration at the beginning of the code:
+   
+   .. code-block:: python
+   
+      self.contour = create_noisy_circle_curve(1, .2, 30)
+   
+   Every ``Trunk``, ``Branch``, and ``NonBranch`` object have a their own unique curve associated with them. However this curve is only applied in the ``grow_one(o)`` section:
+   
    .. code-block:: python
 
-      # From grow_object(o)
       if 'Trunk' in o.name or 'Branch' in o.name:
-        nproduce SetContour(o.contour)
+          nproduce SetContour(o.contour)
       else:
-        # set the contour back to a usual circle
-        reset_contour()
+          reset_contour()
+   
+   This code targets every ``Trunk``, ``Branch``, and ``NonBranch`` object and sets their own curve when growing them. Whenever any other object is passed to the ``grow_object(o)`` function the call to ``reset_contour()`` sets the contour back to a perfect circle to ensure that no curves overlap. 
+   
+   The ``create_noisy_circle()`` function is included in the helper.py file. It works by creating a circle out of a given number of points, and then moving those points in the x and y direction according to a given noise factor. The function has two required parameters and two optional parameters. The two required parameters are ``radius`` and ``noise_factor``. The ``radius`` determines the radius of the generated circle. The ``noise_factor`` is used to set a range in which random points will be generated. The points making up the circle will then be moved a random amount in that range. This can be seen in the main ``for`` loop in the function:
+   
+   .. code-block:: python
+   
+      for angle in t:
+          # Base circle points
+          x = radius * cos(angle)
+          y = radius * sin(angle)
+      
+          # Add noise
+          noise_x = uniform(-noise_factor, noise_factor)
+          noise_y = uniform(-noise_factor, noise_factor)
+      
+          noisy_x = x + noise_x
+          noisy_y = y + noise_y
+      
+          points.append((noisy_x, noisy_y))
+   
+   The two optional parameters for the function are ``num_points`` and ``seed``. ``num_points`` is used to determine how many points make up the circle. If no value is given, it defaults to 100. ``seed`` is used to set the randomness of the circles. If a value is given, the random.seed is set to that value. For this model, seeds were not used.  
 
 5. **Changing Tertiary Branch Curves:**
+   
+   Every tertiary branch on the model follows a unique curve. This curve is generated with the ``create_bezier_curve()`` function which can be found in the helper.py file. The function works by generating four points to be used as guide points for the Bézier curve. There is some control code to make sure that the x points are random but are still generated in a linear fashion. 
+   
+   The function takes four optional parameters: ``num_control_points``, ``x_range``, ``y_range``, and ``seed_val``. ``num_control_points`` defaults to four, the standard for Bézier curves. ``x_range`` and ``y_range`` default to a tuples designating the ranges: (0,10) and (-2,2) respectively. ``seed_val`` defaults to ``None``, however in the actual model ``time.time()`` is used as the seed. 
 
+   The actual designation of the curves for the tertiary branches can be seen in the ``bud(t)`` section:
+   
    .. code-block:: python
 
-      # From bud(t)
       if 'NonTrunk' in new_object.name:
-         import time
-         curve = create_bezier_curve(seed_val=time.time())
-         nproduce [SetGuide(curve, new_object.max_length)
+          import time
+          curve = create_bezier_curve(seed_val=time.time())
+          nproduce [SetGuide(curve, new_object.max_length)
+   
+   A curve is generated with the ``create_bezier_curve()`` and it is used as the guide for the ``SetGuide`` function provided by L-Py. 
 
 6. **Changing color ID system:**
+   
+   Every object on the tree has its own unique color code to act as an ID. The implementation of this can be seen in the ``grow_object(o)`` section:
 
    .. code-block:: python
 
-      # From grow_object(o)
       r, g, b = o.color
       nproduce SetColor(r, g, b)
       
       smallest_color = [r, g, b].index(min([r, g, b]))
       o.color[smallest_color] += 1
+   
+   This works by finding the smallest value of the objects RGB code and incrementing it by one. This is to avoid any kind of error where a color value is greater than 255. To get rid of the color IDs, simply comment out the second two lines of the code above. 
+   
+   
 
 7. **Changing Apple and Leaf ratio:**
    
+   The generation of apples and leaves is random. If something is to grow off of the bud, there is a 90% chance it will be a leaf, and a 10% chance it will be an apple. These percentages are set in the ``Spur`` class declaration: 
+      
    .. code-block:: python
 
       # From Spur class
@@ -181,6 +250,8 @@ There are many things you may want to modify as you grow your own trees. Here ar
               new_ob = None
           
           return new_ob
+   
+   
 
 
 Features
