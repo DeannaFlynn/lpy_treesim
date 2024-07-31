@@ -1,13 +1,15 @@
-from openalea.plantgl.all import NurbsCurve
+from openalea.plantgl.all import NurbsCurve, Vector3, Point2Array, Point3Array, Polyline2D, BezierCurve2D
 from openalea.lpy import Lsystem, newmodule
-from random import uniform
+from random import uniform, seed
+from numpy import linspace, pi, sin, cos
+
 
 def amplitude(x): return 2
 
 def cut_from(pruning_id, s, path = None):
     """Check cut_string_from_manipulation for manual implementation"""
-    #s.insertAt(pruning_id, newmodule('F'))
-    s.insertAt(pruning_id, newmodule('%'))
+    s.insertAt(pruning_id, newmodule('F'))
+    s.insertAt(pruning_id+1, newmodule('%'))
     return s
 
 def cut_using_string_manipulation(pruning_id, s, path = None):
@@ -79,3 +81,47 @@ def gen_noise_branch(radius,nbp=20):
                                      myrandom(radius*amplitude(pt/float(nbp-1))),
                                      pt/float(nbp-1),1) for pt in range(2,nbp)],
                         degree=min(nbp-1,3),stride=nbp*100)
+
+def create_noisy_circle_curve(radius, noise_factor, num_points=100, seed=None):
+  if seed is not None:
+      seed(seed)
+  t = linspace(0, 2 * pi, num_points, endpoint=False)
+  points = []
+  for angle in t:
+      # Base circle points
+      x = radius * cos(angle)
+      y = radius * sin(angle)
+      
+      # Add noise
+      noise_x = uniform(-noise_factor, noise_factor)
+      noise_y = uniform(-noise_factor, noise_factor)
+      
+      noisy_x = x + noise_x
+      noisy_y = y + noise_y
+      
+      points.append((noisy_x, noisy_y))
+  
+  # Ensure the curve is closed by adding the first point at the end
+  points.append(points[0])
+  
+  # Create the PlantGL Point2Array and Polyline2D
+  curve_points = Point2Array(points)
+  curve = Polyline2D(curve_points)
+  return curve
+
+def create_bezier_curve(num_control_points=4, x_range=(0, 10), y_range=(-2, 2), seed_val=None):
+    if seed_val is not None:
+        seed(seed_val)  # Set the random seed for reproducibility
+    # Generate progressive control points within the specified ranges
+    control_points = []
+    prev_x = uniform(x_range[0], x_range[1] / 4)
+    for i in range(num_control_points):
+        x = prev_x + uniform(0, (x_range[1] - prev_x) / (num_control_points - i))
+        y = uniform(*y_range)
+        control_points.append(Vector3(x, y, 0))  # Set z to 0 for 2D curve
+        prev_x = x
+    # Create a Point3Array from the control points
+    control_points_array = Point3Array(control_points)
+    # Create and return the BezierCurve2D object
+    bezier_curve = BezierCurve2D(control_points_array)
+    return bezier_curve
