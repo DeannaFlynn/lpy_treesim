@@ -121,7 +121,6 @@ class BasicWood(ABC):
   def update_guide(self, guide_target):
     curve = []
     self.guide_target = guide_target
-    print("updating guide")
     if self.guide_target == -1:
       return
     if self.has_tied == False:
@@ -130,23 +129,19 @@ class BasicWood(ABC):
       curve, i_target= self.get_control_points(self.guide_target.point, self.last_tie_location , self.end, self.tie_axis)
     if i_target:
       self.guide_points.extend(curve)
-      ##print(i_target, self.guide_points[-1])
       #self.last_tie_location = copy.deepcopy(Vector3(i_target)) #Replaced by updating location at StartEach
   
   def tie_lstring(self, lstring, index):
     spline = CSpline(self.guide_points) 
     if str(spline.curve()) == "nan":
-      print(self.guide_points)
-    #print(lstring[index+1].name in ['&','/','SetGuide'], lstring[index+1])
+      raise ValueError("CURVE IS NAN", self.guide_points)
     remove_count = 0
     if not self.has_tied:
       if lstring[index+1].name in ['&','/','SetGuide']:
-        #print("DELETING", lstring[index+1])
         del(lstring[index+1])
         remove_count+=1
       self.has_tied = True
     if lstring[index+1].name in ['&','/','SetGuide']:
-      #print("DELETING", lstring[index+1])
       del(lstring[index+1])
       remove_count+=1
     lstring.insertAt(index+1, 'SetGuide({}, {})'.format(spline.curve(stride_factor = 100), self.length))
@@ -165,9 +160,7 @@ class BasicWood(ABC):
   def get_control_points(self, target, start, current, tie_axis):
     pts = []
     Lcurve = np.sqrt((start[0]-current[0])**2 + (current[1]-start[1])**2 + (current[2]-start[2])**2)   
-    #print(Lcurve, start, current)
     if Lcurve**2 - (target[0]-start[0])**2*tie_axis[0] - (target[1]-start[1])**2*tie_axis[1] - (target[2]-start[2])**2*tie_axis[2]  <=0:
-      #print("SHORT")
       return pts,None
 
     curve_end = np.sqrt(Lcurve**2 - (target[0]-start[0])**2*tie_axis[0]-(target[1]-start[1])**2*tie_axis[1] - (target[2]-start[2])**2*tie_axis[2])
@@ -180,13 +173,10 @@ class BasicWood(ABC):
         break
     dxyz = np.array(i_target) - np.array(current)
     dx = np.array(current) - np.array(start)
-    print("ASDSADS")
-    print(1,Lcurve*10+1,Lcurve)
     for i in np.arange(0.1,1.1,0.1):
       x = i#/Lcurve#+1#/(10*(Lcurve))
       
       d = self.deflection_at_x(dxyz, x*Lcurve, Lcurve)
-      print(x, dxyz, dx, d)
       pts.append(tuple((start[0]+x*dx[0]+d[0],start[1]+x*dx[1]+d[1],start[2]+x*dx[2]+d[2])))
     return pts, i_target
       

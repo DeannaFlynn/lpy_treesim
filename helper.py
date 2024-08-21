@@ -1,4 +1,4 @@
-from openalea.plantgl.all import NurbsCurve, Vector3, Point2Array, Point3Array, Polyline2D, BezierCurve2D
+from openalea.plantgl.all import NurbsCurve, Vector3, Vector4, Point4Array, Point2Array, Point3Array, Polyline2D, BezierCurve, BezierCurve2D
 from openalea.lpy import Lsystem, newmodule
 from random import uniform, seed
 from numpy import linspace, pi, sin, cos
@@ -51,7 +51,7 @@ def pruning_strategy(it, lstring):
             curr+=1
             continue
         
-        print("Cutting", curr, lstring[curr], (lstring[curr].args[0]+180))
+        # print("Cutting", curr, lstring[curr], (lstring[curr].args[0]+180))
         #lstring[curr].append("no cut")
         lstring = cut_from(curr+1, lstring)
     elif lstring[curr] == '&':
@@ -60,7 +60,7 @@ def pruning_strategy(it, lstring):
           if lstring[curr].args[1] == "no cut":
             curr+=1
             continue
-        print("Cutting", curr, lstring[curr], (lstring[curr].args[0]+180))
+        # print("Cutting", curr, lstring[curr], (lstring[curr].args[0]+180))
         #lstring[curr].append("no cut")
         lstring = cut_from(curr+1, lstring)
     curr+=1
@@ -109,19 +109,22 @@ def create_noisy_circle_curve(radius, noise_factor, num_points=100, seed=None):
   curve = Polyline2D(curve_points)
   return curve
 
-def create_bezier_curve(num_control_points=4, x_range=(0, 10), y_range=(-2, 2), seed_val=None):
+def create_bezier_curve(num_control_points=6, x_range=(-2,2), y_range=(-2, 2), z_range = (0, 10), seed_val=None):
     if seed_val is not None:
         seed(seed_val)  # Set the random seed for reproducibility
     # Generate progressive control points within the specified ranges
     control_points = []
-    prev_x = uniform(x_range[0], x_range[1] / 4)
+    prev_z = z_range[0]
+    zs = linspace(z_range[0], z_range[1], num_control_points)
     for i in range(num_control_points):
-        x = prev_x + uniform(0, (x_range[1] - prev_x) / (num_control_points - i))
+        x = uniform(*x_range)
         y = uniform(*y_range)
-        control_points.append(Vector3(x, y, 0))  # Set z to 0 for 2D curve
-        prev_x = x
+        z = prev_z + uniform(0, (z_range[1] - prev_z) / (num_control_points - i))
+        control_points.append(Vector4(x, y, zs[i], 1))  # Set z to 0 for 2D curve
+        prev_z = x
+    print(control_points)
     # Create a Point3Array from the control points
-    control_points_array = Point3Array(control_points)
+    control_points_array = Point4Array(control_points)
     # Create and return the BezierCurve2D object
-    bezier_curve = BezierCurve2D(control_points_array)
+    bezier_curve = BezierCurve(control_points_array)
     return bezier_curve

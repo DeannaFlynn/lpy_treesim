@@ -45,7 +45,7 @@ To install TreeSim_Lpy, follow these steps (adapted from the `L-Py documentation
    
    .. code-block:: sh
 
-      conda create -n lpy openalea.lpy -c fredboudon -c conda-forge
+      conda create -n lpy python=3.9.13 openalea.lpy -c fredboudon -c conda-forge
 
    The package is retrieved from the `fredboudon` channel (development), and its dependencies will be taken from the `conda-forge` channel.
 
