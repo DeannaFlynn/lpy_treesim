@@ -8,7 +8,7 @@ def amplitude(x): return 2
 
 def cut_from(pruning_id, s, path = None):
     """Check cut_string_from_manipulation for manual implementation"""
-    s.insertAt(pruning_id, newmodule('F'))
+    # s.insertAt(pruning_id, newmodule('F'))
     s.insertAt(pruning_id+1, newmodule('%'))
     return s
 
@@ -114,15 +114,11 @@ def create_bezier_curve(num_control_points=6, x_range=(-2,2), y_range=(-2, 2), z
         seed(seed_val)  # Set the random seed for reproducibility
     # Generate progressive control points within the specified ranges
     control_points = []
-    prev_z = z_range[0]
     zs = linspace(z_range[0], z_range[1], num_control_points)
     for i in range(num_control_points):
         x = uniform(*x_range)
         y = uniform(*y_range)
-        z = prev_z + uniform(0, (z_range[1] - prev_z) / (num_control_points - i))
         control_points.append(Vector4(x, y, zs[i], 1))  # Set z to 0 for 2D curve
-        prev_z = x
-    print(control_points)
     # Create a Point3Array from the control points
     control_points_array = Point4Array(control_points)
     # Create and return the BezierCurve2D object

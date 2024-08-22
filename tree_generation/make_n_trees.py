@@ -25,7 +25,7 @@ if __name__ == "__main__":
         variables = {'label': True, 'seed_val': rand_seed}
         l = Lsystem(lpy_file, variables)
         lstring = l.axiom
-        for time in range(100):
+        for time in range(l.derivationLength):
             lstring = l.derive(lstring, time, 1)
             l.plot(lstring)
         # l.plot()

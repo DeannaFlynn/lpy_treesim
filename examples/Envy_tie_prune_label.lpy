@@ -53,7 +53,7 @@ class Spur(BasicWood):
     
 class Branch(BasicWood):
   count = 0
-  def __init__(self, copy_from = None,  max_buds_segment: int = 10, thickness: float = 0.1,\
+  def __init__(self, copy_from = None,  max_buds_segment: int = 20, thickness: float = 0.1,\
                thickness_increment: float = 0.01, growth_length: float = 1., max_length: float = 7.,\
                tie_axis: tuple = (0,1,1), order: int = 1, prototype_dict: dict = {}, name = None, color = None):
     
@@ -78,7 +78,7 @@ class Branch(BasicWood):
     
   def create_branch(self):
       self.num_buds_segment += 1
-      if rd.random()>0.6:
+      if rd.random()>0.4:
         new_ob = NonTrunk(copy_from = self.prototype_dict['nontrunk'])
       else:
         new_ob = Spur(copy_from = self.prototype_dict['spur'])
@@ -106,7 +106,7 @@ class Trunk(BasicWood):
     
     # Every branch gets its own contour when it is constructed to ensure
     # branches each having a unique profile curve
-    self.contour = create_noisy_circle_curve(1, 0.2, 30)
+    self.contour = create_noisy_circle_curve(3, 0.2, 30)
     
   def is_bud_break(self, num_buds_segment):
     if (rd.random() > 0.2*(1 - num_buds_segment/self.max_buds_segment)):
@@ -114,7 +114,7 @@ class Trunk(BasicWood):
     return True
     
   def create_branch(self):
-    if rd.random() > 0.7:
+    if rd.random() > 0.8:
       return Spur(copy_from = self.prototype_dict['spur'])
     else:
       return Branch(copy_from = self.prototype_dict['branch'])
@@ -164,7 +164,7 @@ basicwood_prototypes = {}
 basicwood_prototypes['trunk'] = Trunk(tie_axis = (0,1,1), max_length = 0.4/growth_length, thickness = 0.01, growth_length = 0.1,thickness_increment = 0.00001, prototype_dict = basicwood_prototypes, color = [255,0,0] )
 basicwood_prototypes['branch'] = Branch(tie_axis = (0,1,1), max_length = .22/growth_length, thickness = 0.01, growth_length = 0.1,thickness_increment = 0.00001, prototype_dict = basicwood_prototypes, color = [255,150,0] )
 basicwood_prototypes['nontrunk'] = NonTrunk(tie_axis = (0,1,1), max_length = 0.05/growth_length, growth_length = 0.1, thickness = 0.003,thickness_increment = 0.0001, prototype_dict = basicwood_prototypes, color = [255,150,0] )
-basicwood_prototypes['spur'] = Spur(tie_axis = (0,1,1), max_length = 0.008/growth_length, thickness = 0.003, growth_length = 0.1, thickness_increment = 0., prototype_dict = basicwood_prototypes, color = [0,255,0] )
+basicwood_prototypes['spur'] = Spur(tie_axis = (0,1,1), max_length = 0.02/growth_length, thickness = 0.003, growth_length = 0.1, thickness_increment = 0., prototype_dict = basicwood_prototypes, color = [0,255,0] )
 
 
 #init  
@@ -286,7 +286,7 @@ def reset_contour():
   nproduce SetContour(default_curve)
 
 
-curve = create_bezier_curve(x_range = (-.1, .1), y_range = (-.1, .1), z_range = (0, 10), seed_val=time.time())
+curve = create_bezier_curve(x_range = (-1, 1), y_range = (-1, 1), z_range = (0, 10), seed_val=time.time())
 Axiom: Attractors(support)SetGuide(curve, trunk_base.max_length)[grow_object(trunk_base)]
 derivation length: 105
 production:
@@ -320,7 +320,7 @@ grow_object(o) :
       
       if 'Spur' in o.name:
         # note that the production of the buds is here with 'spiked_bud(o.thickness)' 
-        produce I(o.growth_length, o.thickness, o) bud(ParameterSet(type=o, num_buds=0)) spiked_bud(o.thickness)grow_object(o)
+        produce I(o.growth_length, o.thickness, o) bud(ParameterSet(type=o, num_buds=0))grow_object(o) #spiked_bud(o.thickness)grow_object(o)
       else:
         # If o is a Trunk, Branch, or NonTrunk, simply produce the internodes 
         produce I(o.growth_length, o.thickness, o) bud(ParameterSet(type=o, num_buds=0)) grow_object(o)
@@ -331,23 +331,25 @@ bud(t) :
      new_object = t.type.create_branch()
      if new_object == None:
        produce *
-     
-     
-     parent_child_dict[new_object.name] = []  
+
+     parent_child_dict[new_object.name] = []
      parent_child_dict[t.type.name].append(new_object)
      #Store new object somewhere
      t.num_buds+=1
      t.type.num_branches+=1
 
-
      # Set a curve for tertiary branches to follow as they grow 
      if 'NonTrunk' in new_object.name:
          import time
-         curve = create_bezier_curve(x_range = (-.1,.1), y_range = (-.1,.1), z_range = (-1,1), num_control_points = 10, seed_val=time.time())
+         curve = create_bezier_curve(x_range = (-.5,.5), y_range = (-.5,.5), z_range = (-1,1), seed_val=time.time())
+         nproduce [SetGuide(curve, new_object.max_length)
+     elif 'Spur' in new_object.name:
+         import time
+         curve = create_bezier_curve(x_range = (-.2,.2), y_range = (-.2,.2), z_range = (-1,1), seed_val=time.time())
          nproduce [SetGuide(curve, new_object.max_length)
      else:
          nproduce [
-     nproduce @RGetPos(new_object.start)C(ParameterSet(type = new_object))/(rd.random()*360)&(rd.random()*90)grow_object(new_object)GetPos(new_object.end)]bud(t)
+     nproduce @RGetPos(new_object.start)C(ParameterSet(type = new_object))/(rd.random()*360)&(rd.random()*360)grow_object(new_object)GetPos(new_object.end)]bud(t)
 
 
 # Simple set of productions to build apple bud. This bud is

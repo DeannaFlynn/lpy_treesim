@@ -1,23 +1,16 @@
-from doctest import Example
-from openalea.lpy import *
-import openalea.plantgl as plantgl
-import openalea.plantgl.math as mt
-import openalea.plantgl.scenegraph as sg
-import openalea.plantgl.algo as alg
-import os
-import random as rd
-import pymeshlab
-from glob import glob
-import os
 
 # PlantGL -> PLY
 def write(fname, scene):
+
     """ Write an OBJ file from a plantGL scene graph.
     This method will convert a PlantGL scene graph into an OBJ file.
     It does not manage  materials correctly yet.
     :Examples:
         import openalea.plantgl.scenegraph as sg
         scene = sg.Scene()"""
+    import openalea.plantgl as plantgl
+    import openalea.plantgl.scenegraph as sg
+    import openalea.plantgl.algo as alg
 
     # print("Write "+fname)
     d = alg.Discretizer()
@@ -72,7 +65,8 @@ end_header'''.format(len(vertices), len(faces))
     f.close()
 
 
-def convert_ply_to_obj(file_path):
+def convert_ply_to_obj(in_path, out_path):
+    import pymeshlab
     ms = pymeshlab.MeshSet()
-    ms.load_new_mesh(file_path)
-    ms.save_current_mesh(file_path[:-4] + '.obj')
+    ms.load_new_mesh(in_path)
+    ms.save_current_mesh(out_path)
