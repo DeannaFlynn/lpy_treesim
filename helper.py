@@ -94,7 +94,8 @@ def create_noisy_circle_curve(radius, noise_factor, num_points=100, seed=None):
       y = radius * sin(angle)
 
       # Need to create texture coordinates
-      s = t / (2 * pi)
+      # texture coordinate is theta/360* 
+      s = t / (2 * pi) 
       
       # Add noise
       noise_x = uniform(-noise_factor, noise_factor)
@@ -108,6 +109,7 @@ def create_noisy_circle_curve(radius, noise_factor, num_points=100, seed=None):
   
   # Ensure the curve is closed by adding the first point at the end
   points.append(points[0])
+  s_texture.append(s_texture[0])
   
   # Create the PlantGL Point2Array and Polyline2D
   curve_points = Point2Array(points)
