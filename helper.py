@@ -87,10 +87,14 @@ def create_noisy_circle_curve(radius, noise_factor, num_points=100, seed=None):
       seed(seed)
   t = linspace(0, 2 * pi, num_points, endpoint=False)
   points = []
+  s_texture = []
   for angle in t:
       # Base circle points
       x = radius * cos(angle)
       y = radius * sin(angle)
+
+      # Need to create texture coordinates
+      s = t / (2 * pi)
       
       # Add noise
       noise_x = uniform(-noise_factor, noise_factor)
@@ -100,6 +104,7 @@ def create_noisy_circle_curve(radius, noise_factor, num_points=100, seed=None):
       noisy_y = y + noise_y
       
       points.append((noisy_x, noisy_y))
+      s_texture.append(s)
   
   # Ensure the curve is closed by adding the first point at the end
   points.append(points[0])
